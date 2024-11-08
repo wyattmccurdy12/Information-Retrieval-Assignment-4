@@ -18,7 +18,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 
 def initialize_llama():
-    '''initialize llama'''
+    '''Initialize the LLaMA model pipeline.'''
     model_id = "meta-llama/Llama-3.2-1B"
 
     pipe = pipeline(
@@ -32,29 +32,34 @@ def initialize_llama():
     return pipe
 
 def initialize_gpt():
-    '''initialize gpt'''
-    
+    '''Initialize the GPT-2 model and tokenizer.'''
     model = AutoModelForCausalLM.from_pretrained("gpt2")
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
     return model, tokenizer
 
 def gen_with_gpt2(model, tokenizer, text_input):
-    '''Expand text input using gpt2'''
+    '''Expand text input using GPT-2.'''
     inputs = tokenizer.encode(text_input, return_tensors="pt").to(model.device)
     outputs = model.generate(inputs, max_length=100, num_return_sequences=1)
     gen_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return gen_text
 
 def gen_with_llama(pipe, text_input):
-    '''expand text using llama3.2 1b'''
+    '''Expand text input using LLaMA 3.2 1B.'''
     gen_text = pipe(text_input, max_length=100, num_return_sequences=1)[0]['generated_text']
     return gen_text
 
 def expand_query_title(model_mode, topic, model, tokenizer_or_pipe):
-    '''Expand the title field of the topics json and return a copy of the json exactly identical to the original but with an expanded title
-    args: 
-    - model_mode: this can be either 'gpt2' or 'llama32' - it indicates which text generation pipeline to use.
-    - topic: the json formatted dictionary containing queries with Id, Title, and Body fields
+    '''Expand the title field of the topics JSON and return a copy of the JSON exactly identical to the original but with an expanded title.
+    
+    Args: 
+    - model_mode: This can be either 'gpt2' or 'llama32' - it indicates which text generation pipeline to use.
+    - topic: The JSON formatted dictionary containing queries with Id, Title, and Body fields.
+    - model: The model used for text generation.
+    - tokenizer_or_pipe: The tokenizer or pipeline used for text generation.
+    
+    Returns:
+    - topic: The updated topic with an expanded title.
     '''
     title = topic['Title']
     body = BeautifulSoup(topic['Body'], 'html.parser').get_text()
@@ -89,6 +94,7 @@ if __name__ == "__main__":
     model = None
     tokenizer_or_pipe = None
 
+    # Initialize the appropriate model and tokenizer/pipeline based on user input
     if args.llm_name == 'gpt2':
         model, tokenizer = initialize_gpt()
         tokenizer_or_pipe = tokenizer
@@ -112,6 +118,7 @@ if __name__ == "__main__":
         expanded_query = expand_query_title(gen_mode, topic, model, tokenizer_or_pipe)
         expanded_queries.append(expanded_query)
     
+    print("Saving expanded queries to output file...")
     # Save the expanded queries to the output JSON file
     with open(args.output, 'w') as output_file:
         json.dump(expanded_queries, output_file, indent=4)
