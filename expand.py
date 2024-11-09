@@ -76,9 +76,9 @@ def expand_query_title(model_mode, topic, model, tokenizer_or_pipe):
     - topic: The updated topic with an expanded title.
     '''
     title = topic['Title']
-    body = BeautifulSoup(topic['Body'], 'html.parser').get_text()
-    tags = ' '.join(topic['Tags'])
-    text_input = f"{title} {body} {tags}"
+    # body = BeautifulSoup(topic['Body'], 'html.parser').get_text()
+    # tags = ' '.join(topic['Tags'])
+    text_input = f"{title}"
 
     if model_mode == 'gpt2':
         expanded_title = gen_with_gpt2(model, tokenizer_or_pipe, text_input)
