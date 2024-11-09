@@ -26,7 +26,7 @@ def initialize_llama():
         model=model_id, 
         torch_dtype=torch.bfloat16, 
         device_map="auto",
-        max_length=200
+        max_new_tokens=50  # Set max_new_tokens instead of max_length
     )
 
     return pipe
@@ -40,7 +40,7 @@ def initialize_gpt():
 def gen_with_gpt2(model, tokenizer, text_input):
     '''Expand text input using GPT-2.'''
     inputs = tokenizer.encode(text_input, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_length=200, num_return_sequences=1)
+    outputs = model.generate(inputs, max_new_tokens=50, num_return_sequences=1)  # Set max_new_tokens instead of max_length
     gen_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return gen_text
 
