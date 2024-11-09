@@ -45,13 +45,22 @@ def gen_with_gpt2(model, tokenizer, text_input):
         print(f"Skipping input as it exceeds max length of {max_length} tokens.")
         return text_input  # Return the original text if it exceeds max length
     inputs = inputs.to(model.device)
-    outputs = model.generate(inputs, max_length=max_length, num_return_sequences=1)
-    gen_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    attention_mask = torch.ones(inputs.shape, device=model.device)  # Create attention mask
+    try:
+        outputs = model.generate(inputs, max_length=max_length, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id, attention_mask=attention_mask)
+        gen_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        return text_input  # Return the original text if a ValueError occurs
     return gen_text
 
 def gen_with_llama(pipe, text_input):
     '''Expand text input using LLaMA 3.2 1B.'''
-    gen_text = pipe(text_input, max_length=200)[0]['generated_text']
+    try:
+        gen_text = pipe(text_input, max_length=200)[0]['generated_text']
+    except ValueError as e:
+        print(f"ValueError: {e}")
+        return text_input  # Return the original text if a ValueError occurs
     return gen_text
 
 def expand_query_title(model_mode, topic, model, tokenizer_or_pipe):
