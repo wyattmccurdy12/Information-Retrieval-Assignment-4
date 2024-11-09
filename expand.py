@@ -26,7 +26,7 @@ def initialize_llama():
         model=model_id, 
         torch_dtype=torch.bfloat16, 
         device_map="auto",
-        max_new_tokens=50  # Set max_new_tokens instead of max_length
+        max_length=200  # Set max_length instead of max_new_tokens
     )
 
     return pipe
@@ -39,14 +39,19 @@ def initialize_gpt():
 
 def gen_with_gpt2(model, tokenizer, text_input):
     '''Expand text input using GPT-2.'''
-    inputs = tokenizer.encode(text_input, return_tensors="pt").to(model.device)
-    outputs = model.generate(inputs, max_new_tokens=50, num_return_sequences=1)  # Set max_new_tokens instead of max_length
+    max_length = 200
+    inputs = tokenizer.encode(text_input, return_tensors="pt")
+    if inputs.size(1) > max_length:
+        print(f"Skipping input as it exceeds max length of {max_length} tokens.")
+        return text_input  # Return the original text if it exceeds max length
+    inputs = inputs.to(model.device)
+    outputs = model.generate(inputs, max_length=max_length, num_return_sequences=1)
     gen_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
     return gen_text
 
 def gen_with_llama(pipe, text_input):
     '''Expand text input using LLaMA 3.2 1B.'''
-    gen_text = pipe(text_input)[0]['generated_text']
+    gen_text = pipe(text_input, max_length=200)[0]['generated_text']
     return gen_text
 
 def expand_query_title(model_mode, topic, model, tokenizer_or_pipe):
